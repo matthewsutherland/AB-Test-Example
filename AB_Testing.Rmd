@@ -1,56 +1,107 @@
 ---
-title: "AB Testing: An Example"
-author: "Matthew R. Sutherland"
-date: "July 20, 2017"
-output: html_document
-css: styles.css
+output:
+  html_document:
+    css: style.css
 ---
-##Introduction
-This article is a simple demonstration of the concept AB testing, and how to conduct an AB test using *R*--an open source statistical programming language. Take the common example of a sign-up page for a website. Let's assume that a non-profit company promoting pollution awareness has a website that distributes media and helpful information regarding conservation and combatting pollution. But the company suspects that their sign-up page—where users submit their email address, is not as effective as it could be. So the data scientist at the company decides to test two alternative page designs in an attempt to increase the *conversion rate*, or the proportion of users that enter their email address. During the test period the page will randomly display either the current design, or one of two new designs.  
+<br>
+<br>
 
-<img src="grass_trash_imgs/original.jpeg" alt="leaf Image" align="middle" style="width: 450px;"/>
+<img src="title.jpg" alt="Title Image" align="middle" style="width: 1280px;"/>
 
-The current layout (above) is minimalist and consists of a maple leaf on a white background. The data scientist suspects that a depiction of nature or pollution might increase the conversion rate. Viewing what one is interested in preserving (lush nature) or eradicating (pollution) is assumed to strengthen the likelihood of a visitor submitting their email address. 
+<br>
 
-The 2 new designs are depicted below.
+###Introduction
 
-<img src="grass_trash_imgs/grass.jpeg" alt="Grass Image" align="left" style="width: 450px;"/>
+<br>
 
-<img src="grass_trash_imgs/trash.jpeg" alt="Trash Image" align="right" style="width: 450px;"/>
+Small modifications to a webpage can greatly impact user behavior. But an experiment must be conducted to test the effectiveness of such changes. Visitors can be randomly assigned to view different versions of a webpage, and the behavior of the different groups can then be compared on some measure. This is known as AB testing.
 
-##Simulating Data
-Let’s assume that we randomly assign the next 600 visitors to view one of the three versions. The version of the page viewed, along with whether or not they entered their email address are recorded as the raw data for our analysis. 
+<br>
 
-Now for some code.
+###Define The Problem
 
-The `dplyr` package has a host of functions that are highly useful for manipulating data when using *data frames*, which is what we will use to store our data. 
+<br>
+
+An anti-pollution organization wants to test the effectiveness of a new webpage where visitors can sign up for their email newsletter. They suspect that the current page does not invoke enough imagery related to nature and pollution, leading to subpar *conversion rates*. The AB test will determine whether different versions of the webpage produce different conversion rates---beyond what would be expected by random chance. 
+
+<br>
+
+The current sign-up page consists of a maple leaf on a white background. There are 2 new sign-up pages---one that consists of a lush green park, and another that consists of trash pollutants, each of which invokes imagery related to purity and pollution, respectively. 
+
+<br>
+
+<img src="webpage_images.jpg" alt="Webpage Images" align="center" style="width: 1280px;"/>
+
+###Test Design
+
+<br>
+
+The next 600 visitors to the sign-up page are randomly assigned to view one of the three versions. For each visitor two pieces of information are recorded---the version of the webpage, and whether or not the visitor signed up. 
+
+<br>
+
+###Statistics
+
+<br>
+
+The following statistics are used for the analysis: 
+
+1. Chi-Square Test of Equal Proportions
+2. Bonferonni Pairwise Comparisons
+3. Power Analysis for Chi-Square Tests
+4. Logistic Regression
+
+<br>
+
+###Libraries
+
+<br>
+
+The `dplyr` package is used for data manipulation and the `ggplot2` package is used for graphing. 
+
+<br>
+
 ```{r, message=FALSE}
-library(dplyr)
+library(dplyr); library(ggplot2)
 ```
 
-We begin by simulating 200 observations that are sampled from a binomial distribution using `rbinom`. The mean proportion of 1’s, or conversions, is specified within the distribution. Then a random sample of data is drawn from that distribution. This means that each time the function is called the proportion will most likely differ. But on average, the proportion of 1’s in the sample will equal the proportion that was specified in the `rbinom` call. Data is simulated separately for the 3 groups. The proportions used for each group were selected to make the example interesting, and are not based on data collected in an actual AB test. 
+<br>
 
-The raw data is converted into a data frame with `data_frame`, and the data are stored into a single column called `signup`. The distributions that we are sampling from have conversion rates, or proportions, of 22%, 28% and 42% for the original, pollution and grassy versions of the sign-up page, respectively.
+###Simulating Data
+
+<br>
+
+For each group viewing the different webpages, 200 observations are sampled from a binomial distribution with `rbinom()`. The first input parameter corresponds to the number of observations, the second corresponds to the number of trials, and the third corresponds to the probability rate, or in this case the conversion rate. Each time the function is called, a different sample is obtained, thus conversion rates will most likely differ with each call. But on average, the sampled conversion rate will equal the proportion specified in the third input parameter.  
+
+<br>
 
 ```{r}
 bi_dist_orig <- data_frame(signup=rbinom(200, 1, .22))
 
 bi_dist_pollu <- data_frame(signup=rbinom(200, 1, .28))
 
-bi_dist_grass <- data_frame(signup=rbinom(200, 1, .42))
+bi_dist_natur <- data_frame(signup=rbinom(200, 1, .42))
 ```
 
-What I’ve done below is hard code the output produced from the first time the code was run. This way the results can be easily replicated for demonstration purposes.
+<br>
+
+Below is output from the code above. It is hard coded for replication purposes. Run the code below to replicate my results exactly. Otherwise skip the code below to maintain the random sample generated by the code above. 
+
+<br>
 
 ```{r}
 bi_dist_orig <- data_frame(signup=c(0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	1,	1,	0,	0,	0,	0,	1,	0,	0,	1,	1,	0,	0,	1,	0,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	0,	0,	0,	1,	0,	0,	1,	1,	0,	0,	1,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	0,	0,	1,	1,	0,	1,	1,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	1,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	0,	1,	1,	1,	0,	0,	0,	0,	1,	1,	0,	1,	0,	0,	0,	0,	1,	1,	0))
 
 bi_dist_pollu <- data_frame(signup=c(1,	0,	1,	0,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	1,	1,	1,	1,	0,	0,	1,	0,	1,	0,	0,	1,	0,	1,	0,	0,	0,	1,	1,	0,	1,	0,	0,	1,	0,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	0,	1,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	1,	1,	1,	0,	0,	0,	0,	1,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	1,	1,	1,	1,	1,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	1,	0,	0,	0,	0,	1,	0,	1,	1,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	1,	0,	1,	0,	1,	0,	0,	1,	0,	1,	1,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0))
 
-bi_dist_grass <- data_frame(signup=c(0,	1,	0,	0,	1,	1,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	1,	1,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	1,	0,	1,	0,	1,	1,	0,	1,	1,	0,	0,	1,	0,	1,	0,	1,	0,	1,	1,	1,	1,	1,	0,	0,	1,	0,	0,	1,	0,	0,	1,	1,	0,	0,	0,	1,	1,	1,	1,	0,	1,	1,	1,	0,	1,	0,	1,	0,	0,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	1,	0,	1,	1,	1,	1,	0,	0,	0,	1,	0,	1,	1,	0,	0,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	0,	0,	0,	1,	0,	1,	0,	0,	0,	1,	0,	0,	1,	1,	0,	1,	0,	0,	1,	0,	0,	1,	1,	0,	0,	0,	1,	1,	0,	0,	0,	0,	1,	0,	1,	1,	0,	0,	0,	1,	1,	1,	0,	1,	0,	1,	0,	1,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	1,	0,	0))
+bi_dist_natur <- data_frame(signup=c(0,	1,	0,	0,	1,	1,	0,	1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	1,	1,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	1,	0,	0,	1,	0,	1,	0,	1,	1,	0,	1,	1,	0,	0,	1,	0,	1,	0,	1,	0,	1,	1,	1,	1,	1,	0,	0,	1,	0,	0,	1,	0,	0,	1,	1,	0,	0,	0,	1,	1,	1,	1,	0,	1,	1,	1,	0,	1,	0,	1,	0,	0,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	1,	0,	1,	1,	1,	1,	0,	0,	0,	1,	0,	1,	1,	0,	0,	1,	0,	0,	0,	1,	1,	0,	0,	1,	1,	0,	0,	0,	1,	0,	1,	0,	0,	0,	1,	0,	0,	1,	1,	0,	1,	0,	0,	1,	0,	0,	1,	1,	0,	0,	0,	1,	1,	0,	0,	0,	0,	1,	0,	1,	1,	0,	0,	0,	1,	1,	1,	0,	1,	0,	1,	0,	1,	0,	0,	0,	0,	0,	1,	0,	1,	0,	0,	0,	0,	0,	0,	1,	0,	0))
 ```
 
-But before analyzing the raw data we need to add some additional variables. A new column `pagetype` is created to signify the version of the sign-up page that a user sees, along with two other variables `successes` and `total`, which reflect the raw number of conversions, and the total number of users that viewed that version of the page.  
+<br>
+
+Several new variables must be calculated before moving on. The page type, total conversions and the total number of trials must be included as separate columns within each data frame. The 'success' variable sums all of the conversions and the 'total' variable contains the total number of observations. The three data sets are then combined with `rbind()`, followed by the removal of the 'signup' column that is no longer needed. 
+
+<br>
 
 ```{r}
 bi_dist_orig$pagetype <- "original"
@@ -61,58 +112,189 @@ bi_dist_pollu$pagetype <- "pollution"
 bi_dist_pollu$success <- sum(bi_dist_pollu$signup)
 bi_dist_pollu$total <- nrow(bi_dist_pollu)
 
-bi_dist_grass$pagetype <- "grass"
-bi_dist_grass$success <- sum(bi_dist_grass$signup)
-bi_dist_grass$total <- nrow(bi_dist_grass)
-```
+bi_dist_natur$pagetype <- "purity"
+bi_dist_natur$success <- sum(bi_dist_natur$signup)
+bi_dist_natur$total <- nrow(bi_dist_natur)
 
-##Chi-Square Test of Equal Proportions
-The data frame `full_data_success_rates` holds the raw number of conversions and the total number of users that viewed each of the 3 page types. The `signup` column is removed because it is no longer needed. 
-
-```{r}
-full_data_success_rates <- rbind(bi_dist_orig[1,], bi_dist_grass[1,], bi_dist_pollu[1,]) %>%
+full_data_success_rates <- rbind(bi_dist_orig[1,], bi_dist_natur[1,], bi_dist_pollu[1,]) %>%
   select(-signup)
+
 ```
 
-The *Chi Square* is run with `prop.test`, and we are interested in whether the p-value of X-Squared is below 0.05. Statistically, this means that if we are willing to say that the groups differ, we must have 95% certainty (or higher) that they do.  
+<br>
 
-The proportion estimates are labeled ‘sample estimates’, with prop 1, prop 2 and prop 3 corresponding to the original, grassy and pollution sign-up pages, respectively. The grassy version had the highest conversion rate at 42%, followed by the pollution version with 29.5%, finishing off with the original version that had a 23% conversion rate.  Importantly, the X-squared value is significant (p < 0.0005), meaning that at least one of the three proportions significantly differs from one of the others. 
+###Chi-Square Test of Equal Proportions
+
+<br>
+
+The Chi-Square Test of Equal Proportions is used to test for differences across binomial distributions. If the p-value of $X^{2}$ is less than or equal to 0.05, then with 95% certainty one can assume that there is at least 1 group difference. 
+
+<br>
+
+Proportion estimates are labeled as 'sample estimates’, with 'prop 1', 'prop 2' and 'prop 3' corresponding to the original, purity and pollution versions of the sign-up page, respectively. The purity version had the highest conversion rate at 42%, followed by the pollution version with 29.5%, and finally the original version that had a 23% conversion rate. Importantly, the p-value of $X^{2}$ was significant (p < 0.0005), meaning that at least two of the three groups differ. 
+
+<br>
 
 ```{r}
-prop.test(full_data_success_rates[[2]], full_data_success_rates[[3]])
+chi_test <- prop.test(full_data_success_rates$success, full_data_success_rates$total)
+chi_test
 ```
 
-For plotting purposes all 3 data sets are bound together (by row) into a single data frame.
+<br>
+
+For plotting purposes, the data frames for all 3 groups are bound together (by row) into a single data frame called 'full_data'.
+
+<br>
 
 ```{r}
-full_data <- rbind(bi_dist_orig, bi_dist_pollu, bi_dist_grass)
+full_data <- rbind(bi_dist_orig, bi_dist_pollu, bi_dist_natur)
 ```
 
-These data are visualized in the bar graph below, which depicts the proportion of conversions and non-conversions for each version of the sign-up page. The library `ggplot2` is loaded and `full_data` is piped into `ggplot` with `pagetype` and `signup` entered as the x and fill properties of the graph. The `geom_bar` call produces the bar graph and `labs` labels the x and y axes. 
+<br>
 
-```{r, message=FALSE, fig.width=8, fig.height=5, fig.align="middle"}
-library(ggplot2)
+The bar graph depicts the proportion of conversions and non-conversions for all three sign-up pages. 
+
+<br>
+
+To begin, 'full_data' is piped (%>%) into `ggplot()` with 'pagetype' and 'signup' entered as the x and fill properties, respectively. Then `geom_bar()` produces the bar graph, with `scale_fill_brewer()` allowing the legend names to be directly labeled. The `theme()` function centers the title and the `labs()` function enables the direct labeling of the title, as well as the x and y axes. 
+
+<br>
+
+```{r, fig.width=8, fig.height=5, fig.align="middle"}
 full_data %>%
   ggplot(aes(x = as.factor(pagetype), fill = as.factor(signup))) + 
   geom_bar(position = "fill") + 
   scale_fill_brewer(name="Conversion Type", palette="Paired", labels=c("No Conversion","Conversion")) +
-  ggtitle("Conversion Rate for Sign-up Pages") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Sign-up Page Type", y = "Proportion")
+  labs(title = "Conversion Rate for Sign-up Pages",
+       x = "Sign-up Page Type", 
+       y = "Proportion")
 ```
 
-##Pairwise Comparisons
-Despite the different proportions of the 3 groups, we need to confirm which one’s statistically differ by comparing the groups directly with one another. To do this we conduct post-hoc (pairwise) comparisons using ` pairwise.prop.test `, which uses the Holm correction method to account for multiple comparisons. Again, groups 1, 2 and 3 correspond to the original, grass and pollution sign-up pages, respectively. Below we see no difference in conversion rates between the current version (1) and the new version depicting pollution (3). However, the version depicting the grassy park (2) produced significantly more conversions than both the current version (1), and the new version with pollution (3). 
+<br>
+
+###Pairwise Comparisons
+
+<br>
+
+Next we must determine which (if any) of the 3 groups have different conversion rates. To do this we conduct post-hoc Bonferonni (pairwise) comparisons using `pairwise.prop.test()`, which adjusts the p-value of each test to correct for multiple comparisons. Again, groups 1, 2 and 3 correspond to the original, purity and pollution versions of the sign-up page, respectively. Below we see no difference in conversion rates between the original and pollution versions. However, the test version depicting the grassy park (purity) produced significantly more conversions than both the original and pollution versions of the sign-up page. 
+
+<br>
+
+Based on these results, the original sign-up page with the maple leaf should be replaced by the purity version that depicts the lush green park in the background. 
+
+<br>
 
 ```{r}
-multi_comp <- pairwise.prop.test(full_data_success_rates[[2]], full_data_success_rates[[3]])
+multi_comp <- pairwise.prop.test(full_data_success_rates$success, full_data_success_rates$total, 
+                                 p.adjust.method = "bonferroni")
 multi_comp$p.value
-
 ```
 
-##Conclusion
-From this the data scientist concludes that the grassy background sign-up page, compared to the other 2 pages, has a significantly higher conversion rate, indicating that the current page should be replaced with the grassy park version. In summary, this was a quick demonstration of how a simple question about user behavior is transformed into an AB test design, and how such analyses are conducted in R to make data-driven decisions about the features of a website. 
+<br>
 
+Before calculating effect size, the number of fails must be counted and placed into the data frame 'full_data_success_rates'.  Moreover, the 'pagetype' and 'total' variables are removed because they are no longer needed. 
+
+<br>
+
+```{r}
+full_data_success_rates$fail <- abs(full_data_success_rates$success - full_data_success_rates$total)
+
+full_data_success_rates$pagetype <- NULL
+full_data_success_rates$total <- NULL
+```
+
+<br>
+
+###Effect Size
+
+<br>
+
+Even when a statistical test is significant, and the null hypothesis is rejected, the p-value does not reveal the strength of the pattern, or the difference. To find that out, the effect size of the test must be calculated.
+
+<br>
+
+The appropriate effect size calculation for the Chi-Square Test of Equal Proportions is the Cramer's V statistic, which can be seen below. The guidelines set by Cohen (1988) indicates that this is a small effect size, at least within the context of social science research. 
+
+<br>
+
+```{r}
+k <- 3 
+r <- 200 
+
+cramer_v <- unname(sqrt((chi_test$statistic/600)/min(k - 1, r - 1)))
+cramer_v
+```
+
+<br>
+
+###Power Analysis
+
+When testing for statistical differneces with the Chi-Square Test, whether or not a differnece is significant depends on the number of observations collected---the sample size. If the sample size is too small, then group differences that exist may go undetected. So the question becomes, how do I know if I collected enough data? A power analysis helps answer this question. 
+
+<br>
+
+The power calculation is related to the sample size, the effect size, the degrees of freedom of the chi-square test. The significance level of the chi-square test is also required. Once you have these values, the power statistic can be calculated, revealing whether or not we have enough data. 
+
+<br>
+
+A sufficient sample size will yield a power statisitc of at least 0.80. In more conservative cases 0.90 is used. The power of the Chi-square test is 0.75, which is reasonably close to 0.80. This suggests that the 600 observations that were simulated gave the test a reasonable amount of power. Of course, not enough to detect all of the group differences, as each group was specified to have a different proportion when they were simulated. 
+
+
+In a real circumstance, one does not know if differences exist between the groups, so they must rely on domain knolwledge to determine whether how small of group differences they want to detect. A difference that is found when the statistical power is very high may not be of practical significance, or importance, hence the reliance on domain knowledge. 
+
+<br>
+
+```{r, warning=FALSE}
+library(pwr)
+pwr_chi <- pwr.chisq.test(w = cramer_v, N = 600, 
+                          df = chi_test$parameter, 
+                          sig.level = 0.05, power = NULL)
+pwr_chi
+```
+
+<br>
+
+###Logistic Regression
+
+<br>
+
+An alternative to using the Chi-Square Test of Equal Proportions is to use logistic regression---a regression model that predicts categorical outcomes. The chi-square test is most appropriate when a single categorical predictor is used, like the version of the sign-up page in this analysis. However, in cases where additional explanatory variables are available, logistic regression should be considered. 
+
+<br>
+
+In addition to recording the sign-up page version, and whether or not the visitor converted, assume that the user's ip address was also recorded, which identifies their location. Then we could test whether the effects that were observed in the chi-square test depend on the location of the visitor. 
+
+<br>
+
+The logistic regression is fit by using `glm()`, which requires specifying the family parameter as 'binomial'. The 'pagetype' predictor is categorical, and thus gets dummy coded, meaning a predictor is created for each level of the variable, except for the level that is used as the baseline. In this case the purity version of the sign-up page is used as the baseline. 
+
+<br>
+
+```{r}
+glm_fit <- glm(signup ~ pagetype, data=full_data, family=binomial)
+summary(glm_fit)
+```
+
+<br>
+
+The results show that the original and pollution predictors both reached significance, meaning that both versions significantly differed from the baseline level. Moreover, the coefficients for both predictors are negative, indicating that the 2 levels of the variable represented by these predictors is smaller than the baseline level. Therefore, we can conclude that the purity version of the sign-up page, which functioned as the baseline in the model, produces significantly more conversions than both the original and the pollution-depicting versions.  
+
+<br>
+
+The next step is to confirm that the original and pollution versions of the sign-up page differ significantly, which is done using pairwise comparisons, which has already been conducted and is reported above. From those comparisons we know that the pollution version of the sign-up page resulted in significantly more conversions compared to the original version. 
+
+<br>
+
+###Conclusion
+
+<br>
+
+Both the test of equal proportions and the logistic regression produced consistent results, demonstrating 'toy' evidence that the company should consider switching the sign-up page from the current version to the one depicting the grassy park. Of course there may be other factors to consider, and other reasons for keeping or updating the sign-up page based on additional AB tests. But according to the insight obtained in this analysis, the grassy park sign-up page should be used for all visitors.
+
+<br>
+<br>
+<br>
 
 
 
